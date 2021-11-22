@@ -3,11 +3,13 @@ game assets credit - Benedict Gaster
 """
 import pygame, sys
 from pygame import time
+from random import choice, randint
 
 from pygame.event import get
 from ship import Ship
 import obstacle
 from alien import Alien
+from laser import Laser
 
 
 """
@@ -28,11 +30,18 @@ class Game:
             # Alien setup
             self.aliens = pygame.sprite.Group()
             self.aliens_alt = pygame.sprite.Group()
-            self.alien_setup(rows = 4, cols = 8)
+            self.alien_lasers = pygame.sprite.Group()
+            self.alien_setup(rows = 7, cols = 12)
             self.alien_direction = 1
 
+            # Other GameSetup
             self.start_time = 0
+            self.alien_shoot_time = 0
+            self.alien_shoot_window = 3
             self.flip_time = 30
+            self.alien_shoot_threshold = 60
+            self.start_difficulty = 10
+            self.difficulty = self.start_difficulty # Descend to make the game harder 
 
         def create_obstacle(self, x_start, y_start, offset_x):
             for row_index, row in enumerate(self.shape):
@@ -69,18 +78,24 @@ class Game:
                     self.aliens_alt.add(alien_sprite_alt)
 
         def alien_position_checker(self):
+            
             all_aliens = self.aliens.sprites()
             all_aliens_alt = self.aliens_alt.sprites()
             for alien in all_aliens:
                 if alien.rect.left <= 0:
                     self.alien_direction = 1
-                    self.alien_move_down(1)
+                    self.difficulty -= 1
+                    if self.difficulty < 0:
+                        self.difficulty = self.start_difficulty
+                        self.alien_move_down(1)
                 if alien.rect.right >= WINDOW_WIDTH:
                     self.alien_direction = -1
             for alien_alt in all_aliens_alt:
                 if alien_alt.rect.left <= 0:
                     self.alien_direction = 1
-                    self.alien_move_down(1)
+                    if self.difficulty < 0:
+                        self.difficulty = self.start_difficulty
+                        self.alien_move_down(1)
                 if alien_alt.rect.right >= WINDOW_WIDTH:
                     self.alien_direction = -1
                 
@@ -92,11 +107,27 @@ class Game:
                 for alien_alt in self.aliens_alt.sprites():
                     alien_alt.rect.y += distance
 
+        def alien_shoot(self):
+            if self.aliens.sprites() or self.aliens_alt.sprites():
+                random_alien = choice(self.aliens.sprites())
+                random_alien_alt = choice(self.aliens_alt.sprites())
+                laser_sprite = Laser(random_alien.rect.center, WINDOW_HEIGHT, 6)
+                laser_sprite_alt = Laser(random_alien_alt.rect.center, WINDOW_HEIGHT, 6)
+                self.alien_lasers.add(laser_sprite)
+                self.alien_lasers.add(laser_sprite_alt)
+
         def get_delay_timer(self):
             self.start_time += 1
             if self.start_time > (self.flip_time * 2):
                 self.start_time = 0
             return self.start_time
+
+        def delay_alien_fire(self):
+            print(self.alien_shoot_time)
+            self.alien_shoot_time += 1
+            if self.alien_shoot_time > (self.alien_shoot_threshold + self.alien_shoot_window):
+                self.alien_shoot_time = 0
+            return self.alien_shoot_time
             
         def collision_checks(self):
             # Player lasers
@@ -117,19 +148,31 @@ class Game:
             self.ship.update()
             self.aliens.update(self.alien_direction)
             self.aliens_alt.update(self.alien_direction)
+            self.alien_lasers.update()
+
             self.alien_position_checker()
             self.collision_checks()
+            
 
             self.ship.sprite.lasers.draw(screen)
             self.ship.draw(screen)
-
             self.blocks.draw(screen)
+            self.alien_lasers.draw(screen)
             
             flip_alien = self.get_delay_timer()
             if flip_alien > self.flip_time: 
                 self.aliens.draw(screen)
             else:
                 self.aliens_alt.draw(screen)
+
+            delay_shoot = self.delay_alien_fire()
+            #self.alien_shoot()
+            if delay_shoot > self.alien_shoot_threshold:
+                self.alien_shoot()
+
+            #print(len(self.aliens_alt))
+            #print(len(self.aliens))
+            #print(len(self.alien_lasers))
            
 
 """
@@ -144,8 +187,8 @@ if __name__ == '__main__':
     YELLOW = (255, 0, 255)
     CYAN = (0, 255, 255)
     # Gives a fake 4:3 monitor
-    WINDOW_HEIGHT = 280
-    WINDOW_WIDTH = 340
+    WINDOW_HEIGHT = 380
+    WINDOW_WIDTH = 540
     MARGIN = 40
     SHIP_SPEED = 5
 
