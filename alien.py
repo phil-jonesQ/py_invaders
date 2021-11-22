@@ -24,3 +24,23 @@ class Alien(pygame.sprite.Sprite):
 
     def update(self, direction):
         self.rect.x += direction
+
+
+class AlienUFO(pygame.sprite.Sprite):
+    def __init__(self, spawn_from, screen_width):
+        super().__init__()
+        self.image = pygame.image.load('assets/ship.png').convert_alpha()
+        
+        if spawn_from == 'RIGHT':
+            self.x = screen_width + 50
+            self.speed = -3
+        else:
+            self.x = -50
+            self.speed = 3
+
+        self.rect = self.image.get_rect(topleft = (self.x, 10))
+
+    def update(self):
+        self.rect.x += self.speed
+
+        
