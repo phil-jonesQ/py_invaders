@@ -6,7 +6,7 @@ import pygame
 
 
 class Laser(pygame.sprite.Sprite):
-    def __init__(self, pos, max_height, speed):
+    def __init__(self, pos, max_height, speed = -8):
         super().__init__()
         self.image = pygame.image.load('assets\player_bullet.png').convert_alpha()
         self.rect = self.image.get_rect(center = pos)

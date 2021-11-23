@@ -11,7 +11,7 @@ import obstacle
 from alien import Alien
 from alien import AlienUFO
 from laser import Laser
-#from explosion import Explosion
+from explosion import Explosion
 
 
 """
@@ -154,12 +154,8 @@ class Game:
 
                     # Alien Collisions
                     if pygame.sprite.spritecollide(laser, self.aliens, True):
-                        #explode_sprite = Explosion(100, 100)
-                        #self.explode_alien = explode_sprite
                         laser.kill()
                     if pygame.sprite.spritecollide(laser, self.aliens_alt, True):
-                        #explode_sprite = Explosion(100, 100)
-                        #self.explode_alien = explode_sprite
                         laser.kill()
 
                     # UFO 
@@ -174,7 +170,12 @@ class Game:
 
                         if pygame.sprite.spritecollide(laser, self.ship, False):
                             laser.kill()
+                            explode_sprite = Explosion(100, 100)
+                            self.explode_alien.add(explode_sprite)
                             print('DEAD DEAD!!!')
+
+                        if pygame.sprite.spritecollide(laser, self.ship.sprite.lasers, True):
+                            laser.kill()
 
             # Aliens 
             if self.aliens:
@@ -201,7 +202,7 @@ class Game:
             self.blocks.draw(screen)
             self.alien_lasers.draw(screen)
             self.ufo.draw(screen)
-            #self.explode_alien.draw(screen)
+            self.explode_alien.draw(screen)
             
             flip_alien = self.get_delay_timer()
             if flip_alien > self.flip_time: 
