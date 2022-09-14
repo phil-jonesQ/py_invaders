@@ -49,6 +49,7 @@ class Game:
             self.alien_shoot_window = 3
             self.flip_time = 30
             self.alien_shoot_threshold = 60
+            self.explode_time = 100
             self.start_difficulty = 6 # Lower to make the game harder
             self.difficulty = self.start_difficulty  
 
@@ -137,6 +138,12 @@ class Game:
                 self.start_time = 0
             return self.start_time
 
+        def delay_explosion(self):
+            self.start_time += 1
+            if self.start_time > (self.explode_time * 2):
+                self.start_time = 0
+            return self.start_time
+
         def delay_alien_fire(self):
             #print(self.alien_shoot_time)
             self.alien_shoot_time += 1
@@ -168,10 +175,15 @@ class Game:
                         if pygame.sprite.spritecollide(laser, self.blocks, True):
                             laser.kill()
 
-                        if pygame.sprite.spritecollide(laser, self.ship, False):
+                        laser_hits_ship = pygame.sprite.spritecollide(laser, self.ship, False)
+                        if laser_hits_ship:
                             laser.kill()
-                            explode_sprite = Explosion(100, 100)
-                            self.explode_alien.add(explode_sprite)
+                            for ship in self.ship:
+                                explode_sprite = Explosion(ship.rect.left, ship.rect.top)
+                                self.explode_alien.add(explode_sprite)
+                            for explode in self.explode_alien:
+                                pass
+                                # explode.kill()
                             print('DEAD DEAD!!!')
 
                         if pygame.sprite.spritecollide(laser, self.ship.sprite.lasers, True):

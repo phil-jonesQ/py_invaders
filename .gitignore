@@ -1,1 +1,8 @@
-__pychache__/
+venv/
+*.spec
+*.exe
+*.zip
+dist/
+build/
+.venv/
+__pycache__/

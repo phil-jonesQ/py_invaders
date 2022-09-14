@@ -8,7 +8,8 @@ class Explosion(pygame.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
-        self.image = pygame.image.load('assets\alien_explosion.png').convert_alpha()
+        #self.image = pygame.image.load('assets\alien_explosion.png').convert_alpha()
+        self.image = pygame.image.load('assets\player_explosion.png').convert_alpha()
         self.rect = self.image.get_rect(topleft = (self.x, self.y))
 
 
