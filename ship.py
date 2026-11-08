@@ -2,15 +2,22 @@
 Class to define the player / ship
 """
 
+from pathlib import Path
+
 import pygame
-from laser import Laser
+from projectile import Laser
+
+
+ASSET_DIR = Path(__file__).resolve().parent / "assets"
+
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, pos, max_width, max_height, speed):
+    def __init__(self, pos, max_width, max_height, speed, sounds=None):
         super().__init__()
-        self.image = pygame.image.load('assets\Player.png').convert_alpha()
+        self.image = pygame.image.load(str(ASSET_DIR / "Player.png")).convert_alpha()
         self.rect = self.image.get_rect(midbottom = pos)
         self.speed = speed
+        self.sounds = sounds
         self.max_width = max_width
         self.max_height = max_height
         self.ready = True
@@ -54,3 +61,5 @@ class Ship(pygame.sprite.Sprite):
 
     def shoot_laser(self):
         self.lasers.add(Laser(self.rect.center, self.max_height, self.laser_speed))
+        if self.sounds is not None:
+            self.sounds.play("player_shoot")
