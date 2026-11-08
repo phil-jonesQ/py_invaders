@@ -25,6 +25,9 @@ ALIEN_DESCENT = 10
 PLAYER_LIVES = 3
 PLAYER_RESPAWN_DELAY = 700
 PLAYER_INVULNERABILITY = 2_000
+ALIEN_ROWS = 5
+ALIEN_ROW_SPACING = 38
+LEVEL_TRANSITION_DELAY = 1_800
 
 
 class Game:
@@ -39,6 +42,7 @@ class Game:
     def reset(self):
         self.lives = PLAYER_LIVES
         self.score = 0
+        self.level = 1
         self._reset_round()
 
     def _reset_round(self):
@@ -73,21 +77,29 @@ class Game:
                         y = WINDOW_HEIGHT - 100 + row_index * block_size
                         self.blocks.add(obstacle.Block(block_size, YELLOW, x, y))
 
-        self._create_aliens(rows=5, cols=10)
+        self._create_aliens(rows=ALIEN_ROWS, cols=10)
         now = pygame.time.get_ticks()
         self.next_alien_shot = now + ALIEN_SHOT_INTERVAL
-        self.next_ufo_spawn = now + randint(12_000, 20_000)
+        self.next_ufo_spawn = now + randint(8_000, 14_000)
         self.game_over = False
         self.won = False
+        self.wave_complete = False
+        self.wave_complete_time = None
 
-    def _create_aliens(self, rows, cols, x_distance=56, y_distance=38):
+    def _create_aliens(self, rows, cols, x_distance=56, y_distance=ALIEN_ROW_SPACING):
         formation_width = (cols - 1) * x_distance + 24
         first_alien_x = (WINDOW_WIDTH - formation_width) / 2
+        level_offset = (self.level - 1) * ALIEN_ROW_SPACING
+        bottom_row_y = 80 + (rows - 1) * y_distance
+        max_level_offset = (
+            (WINDOW_HEIGHT - 140 - bottom_row_y) // y_distance
+        ) * y_distance
+        level_offset = min(level_offset, max_level_offset)
         for row in range(rows):
             alien_type = 1 if row == 0 or row > 2 else row + 1
             for column in range(cols):
                 x = first_alien_x + column * x_distance
-                y = row * y_distance + 80
+                y = row * y_distance + 80 + level_offset
                 self.aliens.add(Alien(alien_type, x, y, column))
 
     def _move_aliens(self):
@@ -132,7 +144,7 @@ class Game:
             return
 
         self.ufo.add(AlienUFO(choice(("LEFT", "RIGHT")), WINDOW_WIDTH))
-        self.next_ufo_spawn = now + randint(12_000, 20_000)
+        self.next_ufo_spawn = now + randint(8_000, 14_000)
 
     def _kill_alien(self, alien):
         center = alien.rect.center
@@ -217,6 +229,15 @@ class Game:
         if self.game_over:
             return
 
+        if self.wave_complete:
+            if (
+                self.wave_complete_time is not None
+                and now - self.wave_complete_time >= LEVEL_TRANSITION_DELAY
+            ):
+                self.level += 1
+                self._reset_round()
+            return
+
         if self.player_dead:
             if self.death_time is not None and now - self.death_time >= 700:
                 if self.lives <= 0:
@@ -248,8 +269,9 @@ class Game:
         self._alien_shoot(now)
         self._collisions()
 
-        if not self.player_dead and not self.aliens and not self.ufo:
-            self.game_over = True
+        if not self.player_dead and not self.aliens:
+            self.wave_complete = True
+            self.wave_complete_time = now
             self.won = True
 
     def draw(self):
@@ -276,8 +298,13 @@ class Game:
             lives_text,
             lives_text.get_rect(topright=(WINDOW_WIDTH - 12, 10)),
         )
+        level_text = self.font.render(f"LEVEL {self.level}", True, WHITE)
+        self.screen.blit(
+            level_text,
+            level_text.get_rect(center=(WINDOW_WIDTH // 2, 22)),
+        )
 
-        if self.game_over:
+        if self.game_over or self.wave_complete:
             shade = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             shade.fill((0, 0, 0, 200))
             self.screen.blit(shade, (0, 0))
@@ -287,14 +314,22 @@ class Game:
             pygame.draw.rect(self.screen, (14, 22, 38), panel, border_radius=18)
             pygame.draw.rect(self.screen, CYAN, panel, width=3, border_radius=18)
 
-            message = "YOU WIN!" if self.won else "GAME OVER"
+            message = "LEVEL COMPLETE!" if self.wave_complete else "GAME OVER"
             title = self.large_font.render(message, True, WHITE)
-            score = self.overlay_font.render(
-                f"FINAL SCORE: {self.score:04}", True, WHITE
-            )
-            restart = self.overlay_font.render(
-                "PRESS  R  OR  ENTER  TO RESTART", True, CYAN
-            )
+            if self.wave_complete:
+                score = self.overlay_font.render(
+                    f"GET READY FOR LEVEL {self.level + 1}", True, WHITE
+                )
+                restart = self.overlay_font.render(
+                    "NEXT LEVEL STARTING...", True, CYAN
+                )
+            else:
+                score = self.overlay_font.render(
+                    f"FINAL SCORE: {self.score:04}", True, WHITE
+                )
+                restart = self.overlay_font.render(
+                    "PRESS  R  OR  ENTER  TO RESTART", True, CYAN
+                )
             self.screen.blit(
                 title, title.get_rect(center=(panel.centerx, panel.y + 65))
             )

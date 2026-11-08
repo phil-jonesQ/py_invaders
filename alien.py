@@ -36,14 +36,15 @@ class Alien(pygame.sprite.Sprite):
 class AlienUFO(pygame.sprite.Sprite):
     def __init__(self, spawn_from, screen_width):
         super().__init__()
-        self.image = pygame.image.load(str(ASSET_DIR / "ship.png")).convert_alpha()
+        image = pygame.image.load(str(ASSET_DIR / "ship.png")).convert_alpha()
+        self.image = pygame.transform.scale_by(image, 2)
 
         if spawn_from == "RIGHT":
             self.x = screen_width + 50
-            self.speed = -3
+            self.speed = -2
         else:
             self.x = -50
-            self.speed = 3
+            self.speed = 2
 
         self.screen_width = screen_width
         self.rect = self.image.get_rect(topleft=(self.x, 10))
